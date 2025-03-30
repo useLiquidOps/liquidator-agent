@@ -1,4 +1,5 @@
-local agent_utils = require ".agent_utils"
+local liquidations = require "liquidations"
+local agent_utils = require "agent_utils"
 local json = require "json"
 
 local mod = {}
@@ -44,6 +45,21 @@ function mod.setup()
       mod.syncInfo()
     end
   )
+  Handlers.add(
+    "liquidations.findOpportunities",
+    { Action = "Cron" },
+    liquidations.findOpportunities
+  )
+  Handlers.add(
+    "liquidations.pauseResume",
+    function (msg)
+      if not agent_utils.isAuthorized(msg.From) then return false end
+      return msg.Tags.Action == "Pause" or msg.Tags.Action == "Resume"
+    end,
+    liquidations.pauseResume
+  )
+
+  print(Colors.gray .. "The agent is now running. You can always pause liquidation discovery with Action = " .. Colors.blue .. "Pause" .. Colors.reset)
 end
 
 -- Sync protocol info
@@ -74,7 +90,7 @@ function mod.syncInfo()
   DiscountInterval = tonumber(cfg["Discount-Interval"])
 
   print(Colors.green .. "Loaded protocol info!" .. Colors.reset)
-  print(Colors.yellow .. "\nProtocol info is synced every day, but it can be triggered manually with the Action='Sync-Protocol' handler. Keep in mind that if the protocol info is not up to date, your process will not be able to liquidate." .. Colors.reset)
+  print(Colors.yellow .. "\nProtocol info is synced every day, but it can be triggered manually with the Action =" .. Colors.blue "Sync-Protocol" .. Colors.yellow .. " handler. Keep in mind that if the protocol info is not up to date, your process will not be able to liquidate." .. Colors.reset)
 end
 
 return mod

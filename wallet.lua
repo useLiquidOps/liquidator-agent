@@ -1,4 +1,4 @@
-local agent_utils = require ".agent_utils"
+local agent_utils = require "agent_utils"
 local bint = require ".bint"(512)
 local utils = require ".utils"
 local json = require "json"
