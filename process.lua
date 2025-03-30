@@ -41,6 +41,11 @@ Handlers.add(
   wallet.deposit
 )
 Handlers.add(
+  "wallet.balances",
+  { Action = "Balances" },
+  wallet.balances
+)
+Handlers.add(
   "wallet.withdraw",
   function (msg)
     if not agent_utils.isAuthorized(msg.From) then return false end
