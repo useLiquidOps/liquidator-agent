@@ -1,3 +1,4 @@
+local agent_utils = require ".agent_utils"
 local json = require "json"
 
 local mod = {}
@@ -18,7 +19,10 @@ function mod.setup()
   Handlers.remove("setup")
   Handlers.add(
     "setup.syncInfo",
-    { Action = "Sync-Protocol", From = ao.env.Process.Owner },
+    function (msg)
+      if not agent_utils.isAuthorized(msg.From) then return false end
+      return msg.Tags.Action == "Sync-Protocol"
+    end,
     mod.syncInfo
   )
 end

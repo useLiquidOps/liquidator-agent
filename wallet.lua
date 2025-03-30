@@ -1,6 +1,6 @@
+local agent_utils = require ".agent_utils"
 local bint = require ".bint"(512)
 local utils = require ".utils"
-local tokenUtils = require ".token"
 local json = require "json"
 
 local mod = {}
@@ -11,7 +11,7 @@ function mod.depositGate(msg)
   local sender = msg.Tags.Sender
   local token = utils.find(function (t) return t.id == msg.From end, Tokens)
 
-  if sender == ao.env.Process.Owner and token ~= nil then return end
+  if agent_utils.isAuthorized(sender) and token ~= nil then return end
 
   msg.reply({
     Action = "Transfer",
@@ -33,11 +33,12 @@ function mod.deposit(msg)
     Colors.green ..
     "New deposit of " ..
     Colors.blue ..
-    tokenUtils.denominatedNumber(msg.Tags.Quantity, token.denomination) ..
+    agent_utils.denominatedNumber(msg.Tags.Quantity, token.denomination) ..
     " " ..
     token.ticker ..
     Colors.green ..
-    "!"
+    "!" ..
+    Colors.reset
   )
 end
 
@@ -50,7 +51,7 @@ function mod.balances(msg)
       Colors.gray ..
       " - " ..
       Colors.blue ..
-      tokenUtils.denominatedNumber(Balances[token.id] or "0", token.denomination) ..
+      agent_utils.denominatedNumber(Balances[token.id] or "0", token.denomination) ..
       " " ..
       token.ticker ..
       Colors.reset
@@ -59,6 +60,83 @@ function mod.balances(msg)
 
   if msg.From ~= ao.env.Process.Id then
     msg.reply({ Data = json.encode(Balances) })
+  end
+end
+
+-- Withdraw funds
+---@type HandlerFunction
+function mod.withdraw(msg)
+  ---@type Token|nil
+  local token = utils.find(function (t) return t.id == msg.Tags.Token end, Tokens)
+  local quantity = bint(msg.Tags.Quantity)
+  local recipient = msg.Tags.Recipient or msg.From
+
+  if not token then
+    local err = "Couldn't withdraw: no balance maintained for token: " .. msg.Tags.Token
+
+    if msg.From ~= ao.id then
+      msg.reply({ Error = err })
+    end
+    return print(Colors.red .. err .. Colors.reset)
+  end
+
+  local balance = bint(Balances[token.id] or "0")
+
+  if bint.ult(balance, quantity) then
+    local err = "Not enough balance to withdraw " ..
+      agent_utils.denominatedNumber(msg.Tags.Quantity, token.denomination) ..
+      " " ..
+      token.ticker ..
+      ", current balance is " ..
+      agent_utils.denominatedNumber(balance, token.denomination) ..
+      " " ..
+      token.ticker
+
+    if msg.From ~= ao.id then
+      msg.reply({ Error = err })
+    end
+    return print(Colors.red .. err .. Colors.reset)
+  end
+
+  print(Colors.blue .. "Withdrawing..." .. Colors.reset)
+
+  local res = ao.send({
+    Target = token.id,
+    Action = "Transfer",
+    Quantity = msg.Tags.Quantity,
+    Recipient = recipient
+  }).receive()
+
+  if not res.Tags.Error and res.Tags.Action == "Debit-Notice" then
+    print(
+      Colors.green ..
+      "Withdrawn " ..
+      Colors.blue ..
+      agent_utils.denominatedNumber(msg.Tags.Quantity, token.denomination) ..
+      " " ..
+      token.ticker ..
+      Colors.green ..
+      "!" ..
+      Colors.reset
+    )
+
+    if msg.From ~= ao.env.Process.Id then
+      msg.reply({ Result = "success" })
+    end
+  else
+    print(
+      Colors.red ..
+      "Failed to withdraw: " ..
+      res.Tags.Error or "unknown error" ..
+      Colors.reset
+    )
+
+    if msg.From ~= ao.env.Process.Id then
+      msg.reply({
+        Result = "failure",
+        Error = res.Tags.Error or "Unknown error"
+      })
+    end
   end
 end
 

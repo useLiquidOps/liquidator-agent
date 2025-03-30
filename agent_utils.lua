@@ -1,3 +1,5 @@
+local utils = require ".utils"
+
 local mod = {}
 
 -- Convert a biginteger with a denomination to a float string
@@ -19,6 +21,13 @@ function mod.denominatedNumber(val, denomination)
   local fractional_part = string.sub(stringVal, len - denomination + 1)
 
   return integer_part .. "." .. fractional_part
+end
+
+-- Check if an address is allowed to interact with the agent
+---@param addr string Address to check
+function mod.isAuthorized(addr)
+  if addr == ao.env.Process.Id or addr == ao.env.Process.Owner then return true end
+  return utils.includes(addr, Admins)
 end
 
 return mod

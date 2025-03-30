@@ -1,3 +1,4 @@
+local agent_utils = require ".agent_utils"
 local setup = require "setup"
 local wallet = require "wallet"
 
@@ -12,13 +13,18 @@ DiscountInterval = DiscountInterval or 0
 Oracle = Oracle or ""
 ---@type table<string, string>
 Balances = Balances or {}
+---@type string[]
+Admins = Admins or {}
 
 Colors.yellow = "\27[33m"
 
 -- setup can be called again if it didn't work
 Handlers.add(
   "setup.setup",
-  { Action = "Setup", From = ao.env.Process.Owner },
+  function (msg)
+    if not agent_utils.isAuthorized(msg.From) then return false end
+    return msg.Tags.Action == "Setup"
+  end,
   setup.setup
 )
 Handlers.add(
@@ -27,9 +33,20 @@ Handlers.add(
   wallet.depositGate
 )
 Handlers.add(
-  "wallet.depoist",
-  { Action = "Credit-Notice", Sender = ao.env.Process.Owner },
+  "wallet.deposit",
+  function (msg)
+    if not agent_utils.isAuthorized(msg.Tags.Sender) then return false end
+    return msg.Tags.Action == "Credit-Notice"
+  end,
   wallet.deposit
+)
+Handlers.add(
+  "wallet.withdraw",
+  function (msg)
+    if not agent_utils.isAuthorized(msg.From) then return false end
+    return msg.Tags.Action == "Withdraw"
+  end,
+  wallet.withdraw
 )
 
 setup.setup()
