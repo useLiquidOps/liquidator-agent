@@ -72,7 +72,8 @@ function mod.withdraw(msg)
   local recipient = msg.Tags.Recipient or msg.From
 
   if not token then
-    local err = "Couldn't withdraw: no balance maintained for token: " .. msg.Tags.Token
+    local err = msg.Tags.Token and "Couldn't withdraw: no balance maintained for token: " .. msg.Tags.Token or
+      "Couldn't withdraw: no token provided"
 
     if msg.From ~= ao.id then
       msg.reply({ Error = err })
