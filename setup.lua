@@ -12,7 +12,9 @@ function mod.setup()
     return print(Colors.red .. "No cronjob set up for this process, please spawn a new one" .. Colors.reset)
   end
 
-  mod.syncInfo()
+  local syncRes = mod.syncInfo()
+  if not syncRes then return end
+
   Handlers.remove("setup")
   Handlers.add(
     "setup.syncInfo",
@@ -39,7 +41,8 @@ function mod.syncInfo()
   end)
 
   if not obtained or not tokens or not cfg then
-    return print(Colors.red .. "Something went wrong while obtaining protocol info:|" .. Colors.reset)
+    print(Colors.red .. "Something went wrong while obtaining protocol info:|" .. Colors.reset)
+    return false
   end
 
   Tokens = tokens
@@ -48,7 +51,7 @@ function mod.syncInfo()
   DiscountInterval = tonumber(cfg["Discount-Interval"])
 
   print(Colors.green .. "Loaded protocol info!" .. Colors.reset)
-  print(Colors.blue .. "Please keep in mind that any protocol updates require you to call the Action='Sync-Protocol' handler!" .. Colors.reset)
+  print(Colors.yellow .. "\nPlease keep in mind that any protocol updates require you to call the Action='Sync-Protocol' handler!" .. Colors.reset)
 end
 
 return mod
