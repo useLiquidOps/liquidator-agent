@@ -15,6 +15,7 @@ Oracle = Oracle or ""
 Balances = Balances or {}
 ---@type string[]
 Admins = Admins or {}
+LastInfoSync = LastInfoSync or 0
 
 Colors.yellow = "\27[33m"
 
