@@ -50,4 +50,18 @@ function mod.shuffle(t)
   end
 end
 
+-- Find index in table
+---@generic T : unknown
+---@param fn fun(val: T): boolean The find function that receives the current element and returns true if it matches, false if it doesn't
+---@param t T[] Array to find the index in
+---@return integer|nil
+function mod.findIndex(fn, t)
+  for index, value in ipairs(t) do
+    if fn(value) then
+      return index
+    end
+  end
+  return nil
+end
+
 return mod

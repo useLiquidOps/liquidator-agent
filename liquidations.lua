@@ -43,8 +43,11 @@ function mod.findOpportunities()
   for _, opportunity in ipairs(data.liquidations) do
     for _, dept in ipairs(opportunity.depts) do
       local deptQty = bint(dept.quantity)
+      local balanceQty = balances[dept.token]
 
-      if not bint.ule(deptQty, zero) then
+      if not bint.ule(deptQty, zero) and not bint.ule(balanceQty, zero) then
+        local liquidateQty = bint.min(deptQty, balanceQty)
+
         
       end
     end

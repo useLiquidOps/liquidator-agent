@@ -1,6 +1,7 @@
 local agent_utils = require "agent_utils"
 local setup = require "setup"
 local wallet = require "wallet"
+local config = require "config"
 local json = require "json"
 
 -- liquidops controller
@@ -17,7 +18,9 @@ Balances = Balances or {}
 Admins = Admins or {}
 Paused = Paused or false
 ---@type "single"|"multiple"
-FocusMode = "single"
+FocusMode = FocusMode or "single"
+---@type string[]
+BlacklistedTokens = BlacklistedTokens or {}
 
 Colors.yellow = "\27[33m"
 
@@ -41,6 +44,14 @@ Handlers.add(
       ["Focus-Mode"] = FocusMode
     })
   end
+)
+Handlers.add(
+  "process.configure",
+  function (msg)
+    if not agent_utils.isAuthorized(msg.Tags.Sender) then return false end
+    return msg.Tags.Action == "Set-Config"
+  end,
+  config.update
 )
 Handlers.add(
   "wallet.depositGate",
