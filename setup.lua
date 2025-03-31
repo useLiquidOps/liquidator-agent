@@ -26,25 +26,6 @@ function mod.setup()
     end,
     mod.syncInfo
   )
-  Handlers.prepend(
-    "setup.autoSyncInfo",
-    function (msg)
-      if msg.Timestamp - 1000 * 60 * 60 * 24 > LastInfoSync then
-        return "continue"
-      end
-
-      return false
-    end,
-    function (msg)
-      -- no need to refresh if the process was just loaded
-      if LastInfoSync == 0 then
-        LastInfoSync = msg.Timestamp
-        return
-      end
-
-      mod.syncInfo()
-    end
-  )
   Handlers.add(
     "liquidations.findOpportunities",
     { Action = "Cron" },
@@ -85,12 +66,12 @@ function mod.syncInfo()
   end
 
   Tokens = tokens
-  Oracle = cfg.Oracle
   MaxDiscount = tonumber(cfg["Max-Discount"])
   DiscountInterval = tonumber(cfg["Discount-Interval"])
 
   print(Colors.green .. "Loaded protocol info!" .. Colors.reset)
-  print(Colors.yellow .. "\nProtocol info is synced every day, but it can be triggered manually with the Action =" .. Colors.blue "Sync-Protocol" .. Colors.yellow .. " handler. Keep in mind that if the protocol info is not up to date, your process will not be able to liquidate." .. Colors.reset)
+  print(Colors.yellow .. "\nProtocol info is synced on liquidations, but it can be triggered manually with the Action =" .. Colors.blue "Sync-Protocol" .. Colors.yellow .. " handler. Keep in mind that if the protocol info is not up to date, your process will not be able to liquidate." .. Colors.reset)
+  print(Colors.gray .. "The agent is running in Focus-Mode = " .. Colors.blue .. FocusMode .. Colors.gray .. ". Read more about this in the agent's readme" .. Colors.reset)
 end
 
 return mod
