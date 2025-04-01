@@ -39,6 +39,10 @@ function mod.update(msg)
       table.remove(BlacklistedTokens, idx)
     end
   end
+
+  if msg.Tags.Name then
+    Name = msg.Tags.Name
+  end
 end
 
 return mod

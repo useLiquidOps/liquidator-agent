@@ -1,4 +1,5 @@
 local utils = require ".utils"
+local bint = require ".bint"(512)
 
 local mod = {}
 
@@ -17,19 +18,39 @@ function mod.denominatedNumber(val, denomination)
   end
 
   -- insert decimal point at the correct position from the back
-  local integer_part = string.sub(stringVal, 1, len - denomination)
-  local fractional_part = string.gsub(
+  local integerPart = string.sub(stringVal, 1, len - denomination)
+  local fractionalPart = string.gsub(
     string.sub(stringVal, len - denomination + 1),
     "0+$",
     ""
   )
 
   -- if the fractional_part is 0, then we only need to return the integer part
-  if fractional_part == "" then
-    return integer_part
+  if fractionalPart == "" then
+    return integerPart
   end
 
-  return integer_part .. "." .. fractional_part
+  return integerPart .. "." .. fractionalPart
+end
+
+-- Convert a float/number to a biginteger with a denomination
+---@param val number|string Float/number value
+---@param denomination number Denomination
+function mod.integerRepresentation(val, denomination)
+  local integerPart, fractionalPart = string.match(tostring(val), "([^%.]+)%.?(.*)")
+
+  if fractionalPart == "" or fractionalPart == "0" then
+    return bint(integerPart .. string.rep("0", denomination))
+  end
+
+  local fracLen = #fractionalPart
+  if denomination > fracLen then
+    fractionalPart = fractionalPart .. string.rep("0", denomination - fracLen)
+  elseif denomination < fracLen then
+    fractionalPart = string.sub(fractionalPart, 1, denomination)
+  end
+
+  return bint(integerPart .. fractionalPart)
 end
 
 -- Check if an address is allowed to interact with the agent
@@ -62,6 +83,31 @@ function mod.findIndex(fn, t)
     end
   end
   return nil
+end
+
+-- Get the value of one token quantity in another
+-- token quantity
+---@param from { ticker: string, quantity: Bint, denomination: number } From token ticker, quantity and denomination
+---@param to { ticker: string, denomination: number } Target token ticker and denomination
+---@param rawPrices RawPrices Pre-fetched prices
+---@return Bint
+function mod.getValueInToken(from, to, rawPrices)
+  -- prices
+  local fromPrice = oracle.getUSDDenominated(rawPrices[from.ticker].price)
+  local toPrice = oracle.getUSDDenominated(rawPrices[to.ticker].price)
+
+  -- get value of the "from" token quantity in USD with extra precision
+  local usdValue = bint.udiv(
+    from.quantity * fromPrice,
+    bint("1" .. string.rep("0", from.denomination))
+  )
+
+  -- convert usd value to the token quantity
+  -- accouting for the denomination
+  return bint.udiv(
+    usdValue * bint("1" .. string.rep("0", to.denomination)),
+    toPrice
+  )
 end
 
 return mod

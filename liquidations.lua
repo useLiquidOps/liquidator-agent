@@ -48,7 +48,7 @@ function mod.findOpportunities()
       if not bint.ule(deptQty, zero) and not bint.ule(balanceQty, zero) then
         local liquidateQty = bint.min(deptQty, balanceQty)
 
-        
+
       end
     end
   end
