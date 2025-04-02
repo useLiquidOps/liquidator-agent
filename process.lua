@@ -17,10 +17,12 @@ Balances = Balances or {}
 ---@type string[]
 Admins = Admins or {}
 Paused = Paused or false
+NoShuffle = NoShuffle or false
 ---@type "single"|"multiple"
 FocusMode = FocusMode or "single"
 ---@type string[]
 BlacklistedTokens = BlacklistedTokens or {}
+Slippage = Slippage or 1
 
 Colors.yellow = "\27[33m"
 

@@ -40,7 +40,7 @@ function mod.integerRepresentation(val, denomination)
   local integerPart, fractionalPart = string.match(tostring(val), "([^%.]+)%.?(.*)")
 
   if fractionalPart == "" or fractionalPart == "0" then
-    return bint(integerPart .. string.rep("0", denomination))
+    return (integerPart .. string.rep("0", denomination))
   end
 
   local fracLen = #fractionalPart
@@ -50,7 +50,7 @@ function mod.integerRepresentation(val, denomination)
     fractionalPart = string.sub(fractionalPart, 1, denomination)
   end
 
-  return bint(integerPart .. fractionalPart)
+  return (integerPart .. fractionalPart)
 end
 
 -- Check if an address is allowed to interact with the agent
@@ -92,9 +92,23 @@ end
 ---@param rawPrices RawPrices Pre-fetched prices
 ---@return Bint
 function mod.getValueInToken(from, to, rawPrices)
+  assert(rawPrices[from.ticker].price ~= nil, "No price for " .. from.ticker)
+  assert(rawPrices[to.ticker].price ~= nil, "No price for " .. to.ticker)
+
   -- prices
-  local fromPrice = oracle.getUSDDenominated(rawPrices[from.ticker].price)
-  local toPrice = oracle.getUSDDenominated(rawPrices[to.ticker].price)
+  local denom = math.max(from.denomination, to.denomination)
+  local fromPrice = mod.integerRepresentation(rawPrices[from.ticker].price, denom)
+  local toPrice = mod.integerRepresentation(rawPrices[to.ticker].price, denom)
+  local zero = bint.zero()
+
+  assert(
+    not bint.eq(fromPrice, zero),
+    from.ticker .. " price is zero in integers"
+  )
+  assert(
+    not bint.eq(toPrice, zero),
+    to.ticker .. " price is zero in integers"
+  )
 
   -- get value of the "from" token quantity in USD with extra precision
   local usdValue = bint.udiv(

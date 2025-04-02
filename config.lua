@@ -40,6 +40,15 @@ function mod.update(msg)
     end
   end
 
+  if msg.Tags.Shuffle then
+    NoShuffle = string.lower(msg.Tags.Shuffle) == "disabled"
+  end
+
+  local newSlippage = tonumber(msg.Tags.Slippage)
+  if newSlippage and newSlippage <= 100 and newSlippage >= 0 then
+    Slippage = math.floor(newSlippage * 100) / 100
+  end
+
   if msg.Tags.Name then
     Name = msg.Tags.Name
   end
