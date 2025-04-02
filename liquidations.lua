@@ -138,7 +138,7 @@ function mod.findOpportunities()
 
                 expectedQty = deptValue
               else
-                print(Colors.yellow .. "Failed to get value for dept " .. dept.ticker .. " in " .. collateral.ticker)
+                print(Colors.yellow .. "Failed to get value for dept " .. dept.ticker .. " in " .. collateral.ticker .. Colors.reset)
               end
             end
 
@@ -175,7 +175,7 @@ function mod.findOpportunities()
               collateral.quantity = tostring(collateralQty - maxReceiveQty)
             end
           else
-            print(Colors.yellow .. "Failed to get value for collateral " .. collateral.ticker .. " in " .. dept.ticker)
+            print(Colors.yellow .. "Failed to get value for collateral " .. collateral.ticker .. " in " .. dept.ticker .. Colors.reset)
           end
         end
       end
@@ -197,6 +197,50 @@ function mod.pauseResume(msg)
     print(Colors.gray .. "You can always pause liquidation discovery with Action = " .. Colors.blue .. "Pause" .. Colors.reset)
     print(Colors.gray .. "The agent is running in Focus-Mode = " .. Colors.blue .. FocusMode .. Colors.gray .. ". Read more about this in the agent's readme" .. Colors.reset)
   end
+end
+
+-- Print out new liquidations
+---@type HandlerFunction
+function mod.notice(msg)
+  ---@type Token|nil
+  local fromToken = utils.find(
+    function (t) return t.id == msg.Tags["From-Token"] end,
+    Tokens
+  )
+  ---@type Token|nil
+  local toToken = utils.find(
+    function (t) return t.id == msg.Tags["To-Token"] end,
+    Tokens
+  )
+  if not toToken or not fromToken then return end
+
+  print(
+    Colors.blue ..
+    "Liquidated " ..
+    Colors.green ..
+    msg.Tags["Liquidation-Target"] ..
+    Colors.blue ..
+    ": "
+    ..
+    Colors.green ..
+    agent_utils.denominatedNumber(
+      msg.Tags["From-Quantity"],
+      fromToken.denomination
+    ) ..
+    Colors.blue ..
+    " " ..
+    fromToken.ticker ..
+    " -> " ..
+    Colors.green ..
+    agent_utils.denominatedNumber(
+      msg.Tags["To-Quantity"],
+      toToken.denomination
+    ) ..
+    Colors.blue ..
+    " " ..
+    toToken.ticker ..
+    Colors.reset
+  )
 end
 
 return mod

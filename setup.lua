@@ -39,6 +39,11 @@ function mod.setup()
     end,
     liquidations.pauseResume
   )
+  Handlers.add(
+    "liquidations.notice",
+    { From = Controller, Action = "Liquidate-Confirmation" },
+    liquidations.notice
+  )
 
   print(Colors.gray .. "The agent is now running. You can always pause liquidation discovery with Action = " .. Colors.blue .. "Pause" .. Colors.reset)
 end
