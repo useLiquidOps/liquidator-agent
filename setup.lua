@@ -75,7 +75,7 @@ function mod.syncInfo()
   DiscountInterval = tonumber(cfg["Discount-Interval"])
 
   print(Colors.green .. "Loaded protocol info!" .. Colors.reset)
-  print(Colors.yellow .. "\nProtocol info is synced on liquidations, but it can be triggered manually with the Action =" .. Colors.blue "Sync-Protocol" .. Colors.yellow .. " handler. Keep in mind that if the protocol info is not up to date, your process will not be able to liquidate." .. Colors.reset)
+  print(Colors.yellow .. "\nProtocol info is synced on liquidations, but it can be triggered manually with the Action =" .. Colors.blue .. "Sync-Protocol" .. Colors.yellow .. " handler. Keep in mind that if the protocol info is not up to date, your process will not be able to liquidate." .. Colors.reset)
   print(Colors.gray .. "The agent is running in Focus-Mode = " .. Colors.blue .. FocusMode .. Colors.gray .. ". Read more about this in the agent's readme" .. Colors.reset)
 end
 
