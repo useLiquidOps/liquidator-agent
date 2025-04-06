@@ -49,7 +49,7 @@ function mod.findOpportunities()
       local deptQty = bint(dept.quantity)
       local balanceQty = balances[dept.token]
 
-      if bint.ult(zero, deptQty) and bint.ult(zero, balanceQty) then
+      if bint.ult(zero, deptQty) and bint.ult(zero, balanceQty) and balanceQty ~= nil then
         table.insert(availableLiquidations, opportunity)
         goto continue
       end
