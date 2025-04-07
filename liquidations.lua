@@ -44,12 +44,12 @@ function mod.findOpportunities()
   ---@type QualifyingPosition[]
   local availableLiquidations = {}
 
-  for _, opportunity in ipairs(data.liquidations) do print(opportunity)
+  for _, opportunity in ipairs(data.liquidations) do
     for _, debt in ipairs(opportunity.debts) do
       local debtQty = bint(debt.quantity)
       local balanceQty = balances[debt.token]
 
-      if bint.ult(zero, debtQty) and bint.ult(zero, balanceQty) and balanceQty ~= nil then
+      if bint.ult(zero, debtQty) and balanceQty ~= nil and bint.ult(zero, balanceQty) then
         table.insert(availableLiquidations, opportunity)
         goto continue
       end
