@@ -173,6 +173,7 @@ function mod.findOpportunities()
               -- if the focus mode is multiple, we need to update the user's position
               debt.quantity = tostring(debtQty - liquidateQty)
               collateral.quantity = tostring(collateralQty - maxReceiveQty)
+              balances[debt.token] = bint.max(balances[debt.token] - liquidateQty, bint.zero())
             end
           else
             print(Colors.yellow .. "Failed to get value for collateral " .. collateral.ticker .. " in " .. debt.ticker .. Colors.reset)
