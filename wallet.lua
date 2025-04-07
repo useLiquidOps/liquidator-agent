@@ -109,11 +109,17 @@ function mod.withdraw(msg)
   }).receive()
 
   if not res.Tags.Error and res.Tags.Action == "Debit-Notice" then
+    if Balances[token.id] then
+      Balances[token.id] = tostring(
+        bint.min(bint.zero(), bint(Balances[token.id]) - bint(res.Tags.Quantity))
+      )
+    end
+
     print(
       Colors.green ..
       "Withdrawn " ..
       Colors.blue ..
-      agent_utils.denominatedNumber(msg.Tags.Quantity, token.denomination) ..
+      agent_utils.denominatedNumber(res.Tags.Quantity, token.denomination) ..
       " " ..
       token.ticker ..
       Colors.green ..
@@ -138,6 +144,19 @@ function mod.withdraw(msg)
         Error = res.Tags.Error or "Unknown error"
       })
     end
+  end
+end
+
+-- This only handles debit notices that are not
+-- the result of withdrawing
+---@type HandlerFunction
+function mod.debitNotice(msg)
+  local token = msg.From
+
+  if Balances[token] then
+    Balances[token] = tostring(
+      bint.min(bint.zero(), bint(Balances[token]) - bint(msg.Tags.Quantity))
+    )
   end
 end
 

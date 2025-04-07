@@ -81,5 +81,10 @@ Handlers.add(
   end,
   wallet.withdraw
 )
+Handlers.add(
+  "wallet.debitNotice",
+  { Action = "Debit-Notice" },
+  wallet.debitNotice
+)
 
 setup.setup()
