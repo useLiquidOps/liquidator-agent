@@ -6,7 +6,7 @@ local json = require "json"
 local mod = {}
 
 ---@alias CollateralBorrow { token: string, ticker: string, quantity: string }
----@alias QualifyingPosition { target: string, depts: CollateralBorrow[], collaterals: CollateralBorrow[], discount: string }
+---@alias QualifyingPosition { target: string, debts: CollateralBorrow[], collaterals: CollateralBorrow[], discount: string }
 ---@alias RawPrices table<string, { price: number, timestamp: number }>
 
 -- Discover liquidations and try to liquidate them
@@ -39,17 +39,17 @@ function mod.findOpportunities()
     balances[addr] = bint(raw)
   end
 
-  -- filter out the opportunities that have dept
+  -- filter out the opportunities that have debt
   -- in a non zero balance's token
   ---@type QualifyingPosition[]
   local availableLiquidations = {}
 
-  for _, opportunity in ipairs(data.liquidations) do
-    for _, dept in ipairs(opportunity.depts) do
-      local deptQty = bint(dept.quantity)
-      local balanceQty = balances[dept.token]
+  for _, opportunity in ipairs(data.liquidations) do print(opportunity)
+    for _, debt in ipairs(opportunity.debts) do
+      local debtQty = bint(debt.quantity)
+      local balanceQty = balances[debt.token]
 
-      if bint.ult(zero, deptQty) and bint.ult(zero, balanceQty) and balanceQty ~= nil then
+      if bint.ult(zero, debtQty) and bint.ult(zero, balanceQty) and balanceQty ~= nil then
         table.insert(availableLiquidations, opportunity)
         goto continue
       end
@@ -70,9 +70,9 @@ function mod.findOpportunities()
   end
 
   for _, opportunity in ipairs(availableLiquidations) do
-    for _, dept in ipairs(opportunity.depts) do
-      local deptQty = bint(dept.quantity)
-      local balanceQty = balances[dept.token]
+    for _, debt in ipairs(opportunity.debts) do
+      local debtQty = bint(debt.quantity)
+      local balanceQty = balances[debt.token]
 
       for _, collateral in ipairs(opportunity.collaterals) do
         if not utils.includes(collateral.token, BlacklistedTokens) then
@@ -87,8 +87,8 @@ function mod.findOpportunities()
               denomination = denominations[collateral.token]
             },
             {
-              ticker = dept.ticker,
-              denomination = denominations[dept.token]
+              ticker = debt.ticker,
+              denomination = denominations[debt.token]
             },
             data.prices
           )
@@ -103,9 +103,9 @@ function mod.findOpportunities()
             end
 
             -- the maximum the liquidator can liquidate is either the
-            -- liquidator balance of the specific token, the dept qty,
+            -- liquidator balance of the specific token, the debt qty,
             -- or the value of the collateral (whichever is less)
-            local liquidateQty = bint.min(deptQty, balanceQty)
+            local liquidateQty = bint.min(debtQty, balanceQty)
 
             -- expected quantity with discount
             local expectedQty = zero
@@ -114,12 +114,12 @@ function mod.findOpportunities()
               liquidateQty = collateralValue
               expectedQty = collateralQty
             else
-              local success, deptValue = pcall(
+              local success, debtValue = pcall(
                 agent_utils.getValueInToken,
                 {
                   quantity = liquidateQty,
-                  ticker = dept.ticker,
-                  denomination = denominations[dept.token]
+                  ticker = debt.ticker,
+                  denomination = denominations[debt.token]
                 },
                 {
                   ticker = collateral.ticker,
@@ -130,15 +130,15 @@ function mod.findOpportunities()
 
               if success then
                 if opportunity.discount > 0 then
-                  deptValue = bint.udiv(
-                    deptValue * bint(100 * data.precisionFactor + opportunity.discount),
+                  debtValue = bint.udiv(
+                    debtValue * bint(100 * data.precisionFactor + opportunity.discount),
                     bint(100 * data.precisionFactor)
                   )
                 end
 
-                expectedQty = deptValue
+                expectedQty = debtValue
               else
-                print(Colors.yellow .. "Failed to get value for dept " .. dept.ticker .. " in " .. collateral.ticker .. Colors.reset)
+                print(Colors.yellow .. "Failed to get value for debt " .. debt.ticker .. " in " .. collateral.ticker .. Colors.reset)
               end
             end
 
@@ -155,7 +155,7 @@ function mod.findOpportunities()
             -- liquidate
             if bint.ult(zero, expectedQty) then
               ao.send({
-                Target = dept.token,
+                Target = debt.token,
                 Action = "Transfer",
                 Quantity = tostring(liquidateQty),
                 Recipient = Controller,
@@ -171,11 +171,11 @@ function mod.findOpportunities()
               end
 
               -- if the focus mode is multiple, we need to update the user's position
-              dept.quantity = tostring(deptQty - liquidateQty)
+              debt.quantity = tostring(debtQty - liquidateQty)
               collateral.quantity = tostring(collateralQty - maxReceiveQty)
             end
           else
-            print(Colors.yellow .. "Failed to get value for collateral " .. collateral.ticker .. " in " .. dept.ticker .. Colors.reset)
+            print(Colors.yellow .. "Failed to get value for collateral " .. collateral.ticker .. " in " .. debt.ticker .. Colors.reset)
           end
         end
       end
@@ -213,7 +213,7 @@ function mod.notice(msg)
     Tokens
   )
   if not toToken or not fromToken then return end
-
+  -- TODO: sync balances
   print(
     Colors.blue ..
     "Liquidated " ..
