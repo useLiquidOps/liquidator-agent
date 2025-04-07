@@ -1,5 +1,7 @@
 # LiquidOps Liquidator Agent
 
+> **Important**: This codebase has not been audited. LiquidOps and this agent is in Mainnet Beta, please use with caution and be aware of potential risks or limitations.
+
 ## Setup
 
 To get started, clone this repo and in the project folder, create an aos process, with a cron interval. This will be the interval in which liquidations will be checked by the agent. Remember, you cannot modify it after creating the process.
