@@ -1,4 +1,5 @@
 local agent_utils = require "agent_utils"
+local utils = require ".utils"
 local setup = require "setup"
 local wallet = require "wallet"
 local config = require "config"
@@ -59,6 +60,25 @@ Handlers.add(
   "wallet.depositGate",
   Handlers.utils.continue({ Action = "Credit-Notice" }),
   wallet.depositGate
+)
+Handlers.add(
+  "wallet.refund",
+  function (msg)
+    if msg.Tags.Action ~= "Credit-Notice" then return false end
+    local token = msg.From
+    local sender = msg.Tags.Sender
+
+    -- token has to be one of the supported tokens
+    ---@param t Token
+    if utils.find(function (t) return t.id == token end, Tokens) == nil then return false end
+
+    return sender == Controller or utils.find(
+      ---@param t Token
+      function (t) return t.oToken == sender end,
+      Tokens
+    ) ~= nil
+  end,
+  wallet.refund -- silent deposit
 )
 Handlers.add(
   "wallet.deposit",

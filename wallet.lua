@@ -27,7 +27,7 @@ function mod.deposit(msg)
   local token = utils.find(function (t) return t.id == msg.From end, Tokens)
   if not token then return end
 
-  Balances[token.id] = bint(Balances[token.id] or "0") + bint(msg.Tags.Quantity)
+  Balances[token.id] = tostring(bint(Balances[token.id] or "0") + bint(msg.Tags.Quantity))
 
   print(
     Colors.green ..
@@ -158,6 +158,12 @@ function mod.debitNotice(msg)
       bint.min(bint.zero(), bint(Balances[token]) - bint(msg.Tags.Quantity))
     )
   end
+end
+
+-- Silently add refunds to the balances
+---@type HandlerFunction
+function mod.refund(msg)
+  Balances[msg.From] = tostring(bint(Balances[msg.From] or "0") + bint(msg.Tags.Quantity))
 end
 
 return mod
